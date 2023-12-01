@@ -5,7 +5,7 @@ class Day1 < AdventDay
 
   def first_part
     calibration_values = input.map do |line|
-      digits = line.gsub(/\D/, '').chars
+      digits = extract_digits(line)
       [digits.first, digits.last].join.to_i
     end
 
@@ -16,6 +16,10 @@ class Day1 < AdventDay
   end
 
   private
+
+  def extract_digits(line)
+    line.gsub(/\D/, '').chars
+  end
 
   def convert_data(data)
     super
