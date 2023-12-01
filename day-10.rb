@@ -14,4 +14,4 @@ class Day10 < AdventDay
   end
 end
 
-Day10.solve
+Day10.solve if __FILE__ == $0
