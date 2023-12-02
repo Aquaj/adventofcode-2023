@@ -1,7 +1,7 @@
 require_relative 'common'
 
 class Day2 < AdventDay
-  EXPECTED_RESULTS = { 1 => 8  }
+  EXPECTED_RESULTS = { 1 => 8, 2 => 2286 }
 
   REFERENCE_BAG = {
     red: 12,
@@ -22,6 +22,17 @@ class Day2 < AdventDay
   end
 
   def second_part
+    min_cube_sets = games.map do |game|
+      REFERENCE_BAG.keys.map do |color|
+        minimum_amount = game[:pulls].map { |pull| pull[color] || 0 }.max
+
+        [color, minimum_amount]
+      end.to_h
+    end
+
+    powers = min_cube_sets.map { |set| set.values.reduce(&:*) }
+
+    powers.sum
   end
 
   private
