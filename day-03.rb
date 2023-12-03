@@ -1,11 +1,12 @@
 require_relative 'common'
 
 class Day3 < AdventDay
-  EXPECTED_RESULTS = { 1 => 4361 }
+  EXPECTED_RESULTS = { 1 => 4361, 2 => 467835 }
 
   class Schematic < Grid
-    SYMBOL = /\D/
     NUMBER = /\d/
+    SYMBOL = /\D/
+    GEAR_SYMBOL = /\*/
 
     def neighbors_of(*coords, diagonals: true)
       # Do not connect through symbols
@@ -43,6 +44,28 @@ class Day3 < AdventDay
   end
 
   def second_part
+    parts = schematic.components.
+      reject { |group| group.none? { |pos| schematic[*pos] =~ Schematic::NUMBER } }.
+      group_by { |group| group.find { |pos| schematic[*pos] =~ Schematic::SYMBOL } }.
+      without(nil)
+
+    # "A gear is any * symbol that is adjacent to exactly two part numbers."
+    gears = parts.select { |part_type, parts| schematic[*part_type] =~ Schematic::GEAR_SYMBOL && parts.size == 2 }
+
+    ratios = gears.map do |gear, parts|
+      numbers = parts.map do |positions|
+        digits = positions.
+          sort_by { |(x,_)| x }. # Sorting by y gives the digits in order ince numbers are read LTR
+          map { |pos| schematic[*pos] }. # Converting to value in grid, ie digits
+          reject { |digit| digit =~ Schematic::SYMBOL } # Remove symbol
+
+        digits.join.to_i
+      end
+
+      numbers.reduce(&:*)
+    end
+
+    ratios.sum
   end
 
   private
