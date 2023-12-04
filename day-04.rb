@@ -12,28 +12,49 @@ class Day4 < AdventDay
 
   class CardPile
     def initialize(cards)
-      @cards = cards.dup
-      @draws = {}
-      @counts = @cards.map { |c| [c[:id], 0] }.to_h
+      @original_cards = cards.dup
+      @changes = {}
+      @counts = {}
     end
 
-    attr_reader :cards, :counts
+    attr_reader :original_cards, :counts
 
     def draw(card)
-      @counts[card[:id]] += 1
+      @counts = impact(compute_change(card), on: @counts)
 
-      @draws[card] ||= begin
+      @counts
+    end
+
+    private
+
+    def compute_change(card)
+      @changes[card] ||= begin
+        change = empty_changeset
+        change[card] += 1
+
         count = (card[:winners] & card[:numbers]).count
-        @cards.slice(card[:id], count) || []
-      end
+        new_cards = original_cards.slice(card[:id], count) || []
 
-      @draws[card].each { |new_card| draw(new_card) }
+        new_cards.reduce(change) do |changeset, new_card|
+          impact(compute_change(new_card), on: changeset)
+        end
+      end
+    end
+
+    def empty_changeset
+      original_cards.map { |c| [c, 0] }.to_h
+    end
+
+    def impact(change, on:)
+      on.merge(change) { |_,existing,new| existing + new }
     end
   end
 
   def second_part
     pile = CardPile.new(cards)
-    pile.cards.each { |card| pile.draw(card) }
+
+    pile.original_cards.each { |card| pile.draw(card) }
+
     pile.counts.values.sum
   end
 
