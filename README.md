@@ -1,6 +1,6 @@
 # advent-of-code-2023 [![Examples](../../actions/workflows/examples.yml/badge.svg)](../../actions/workflows/examples.yml) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-[Advent of Code 2023 🎄](https://adventofcode.com/year/2023) solutions by `@yournamehere`
+[Advent of Code 2023 🎄](https://adventofcode.com/year/2023) solutions by `@Aquaj`
 
 README is based on [Jérémie Bonal's AoC Ruby template](https://github.com/aquaj/adventofcode-template).
 
