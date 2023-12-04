@@ -14,23 +14,27 @@ class Day4 < AdventDay
     def initialize(cards)
       @cards = cards.dup
       @draws = {}
+      @counts = @cards.map { |c| [c[:id], 0] }.to_h
     end
 
-    attr_reader :cards
+    attr_reader :cards, :counts
 
     def draw(card)
+      @counts[card[:id]] += 1
+
       @draws[card] ||= begin
         count = (card[:winners] & card[:numbers]).count
-        @cards.slice(card[:id], count)
+        @cards.slice(card[:id], count) || []
       end
-      @cards.push *@draws[card]
+
+      @draws[card].each { |new_card| draw(new_card) }
     end
   end
 
   def second_part
     pile = CardPile.new(cards)
     pile.cards.each { |card| pile.draw(card) }
-    pile.cards.count
+    pile.counts.values.sum
   end
 
   private
