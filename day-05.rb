@@ -28,7 +28,8 @@ class Day5 < AdventDay
 
   STEPS = %i[seed soil fertilizer water light temperature humidity location]
   def first_part
-    almanac[:seeds].map do |seed|
+    seeds = almanac[:seed_info]
+    seeds.map do |seed|
       STEPS.each_cons(2).reduce(seed) do |value, (from, to)|
         converter = almanac[:converters].find { |conv| conv.can_convert?(from, to:)  }
         converter.convert(value)
@@ -45,7 +46,7 @@ class Day5 < AdventDay
 
   def convert_data(data)
     sections = data.split("\n\n")
-    seeds = sections.shift.scan(/\d+/).map(&:to_i)
+    seed_info = sections.shift.scan(/\d+/).map(&:to_i)
 
     converters = sections.map do |section|
       lines = section.split("\n")
@@ -58,7 +59,7 @@ class Day5 < AdventDay
       converter
     end
 
-    { seeds: , converters: }
+    { seed_info: , converters: }
   end
 end
 
