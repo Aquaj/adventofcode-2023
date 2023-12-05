@@ -1,7 +1,7 @@
 require_relative 'common'
 
 class Day5 < AdventDay
-  EXPECTED_RESULTS = { 1 => 35 }
+  EXPECTED_RESULTS = { 1 => 35, 2 => 46 }
 
   class Converter
     def initialize(from_resource, to_resource)
@@ -38,6 +38,17 @@ class Day5 < AdventDay
   end
 
   def second_part
+    seed_ranges = almanac[:seed_info]
+    seeds = seed_ranges.each_slice(2).map { |start, range| Range.new(start, start+range) }
+
+    seeds.flat_map do |range|
+      range.map do |seed|
+        STEPS.each_cons(2).reduce(seed) do |value, (from, to)|
+          converter = almanac[:converters].find { |conv| conv.can_convert?(from, to:)  }
+          converter.convert(value)
+        end
+      end
+    end.min
   end
 
   private
