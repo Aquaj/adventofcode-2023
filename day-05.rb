@@ -56,10 +56,13 @@ class Day5 < AdventDay
       type == @from && (to.nil? || to == @to)
     end
 
-    def convert(value)
-      _, conversion_delta = @conversions.find { |range, _| range.cover? value }
-      return value unless conversion_delta
-      value + conversion_delta
+    def convert(value, &default)
+      default ||= proc { |v| v }
+      _, delta = @conversions.find { |range, _| range.cover? value }
+      return default.call(value) unless delta
+      value + delta
+    end
+  end
 
   class LinearConverter
     def initialize(from_resource, to_resource, input = Z3::Int("input-#{from_resource}>#{to_resource}"), formula = input)
@@ -169,11 +172,17 @@ class Day5 < AdventDay
 
     # combined.find_minimum(allowed_answers: seeds)
 
-    seeds.map.with_index do |seed_range, i|
-      [seed_range.begin, seed_range.end].map do |seed|
-        combined.convert(seed)
-      end.min
-    end.min
+    # seeds.map.with_index do |seed_range, i|
+    #   [seed_range.begin, seed_range.end].map do |seed|
+    #     combined.convert(seed)
+    #   end.min
+    # end.min
+
+    inversion = combined.inverse
+    (1..).find do |location|
+      seed = inversion.convert(location) { nil }
+      seeds.any? { |range| range.cover? seed }
+    end
   end
 
   private
