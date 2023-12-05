@@ -178,11 +178,17 @@ class Day5 < AdventDay
     #   end.min
     # end.min
 
-    inversion = combined.inverse
-    (1..).find do |location|
-      seed = inversion.convert(location) { nil }
-      seeds.any? { |range| range.cover? seed }
-    end
+    # inversion = combined.inverse
+    # (1..).find do |location|
+    #   seed = inversion.convert(location) { nil }
+    #   seeds.any? { |range| range.cover? seed }
+    # end
+
+    combined.breakpoints.reject do |breakpoint|
+      seeds.none? { |seed_range| seed_range.cover? breakpoint }
+    end.map do |seed|
+      combined.convert(seed)
+    end.min
   end
 
   private
