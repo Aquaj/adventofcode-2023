@@ -1,10 +1,9 @@
 require_relative 'common'
-require 'z3'
 
 class Day5 < AdventDay
   EXPECTED_RESULTS = { 1 => 35, 2 => 46 }
 
-  class NaiveConverter
+  class Converter
     def initialize(from_resource, to_resource)
       @from = from_resource.to_sym
       @to = to_resource.to_sym
@@ -18,7 +17,7 @@ class Day5 < AdventDay
     def chain_with(oth)
       raise ArgumentError, "can't combine non-matching #{self.to} / #{oth.from}" unless oth.from == self.to
 
-      combined = NaiveConverter.new(self.from, oth.to)
+      combined = Converter.new(self.from, oth.to)
       inversion = self.inverse
 
       oth_breakpoints = oth.breakpoints.map { |b| inversion.convert(b) }
@@ -34,7 +33,7 @@ class Day5 < AdventDay
     end
 
     def inverse
-      inversion = NaiveConverter.new(to, from)
+      inversion = Converter.new(to, from)
 
       @conversions.map do |range, delta|
         new_begin = range.begin + delta
@@ -64,95 +63,6 @@ class Day5 < AdventDay
     end
   end
 
-  class LinearConverter
-    def initialize(from_resource, to_resource, input = Z3::Int("input-#{from_resource}>#{to_resource}"), formula = input)
-      @from = from_resource.to_sym
-      @to = to_resource.to_sym
-      @input = input
-      @formula = formula
-    end
-
-    def add_conversion(range, delta)
-      @formula = Z3::IfThenElse((@input >= range.begin) & (@input < range.end), @input + delta, @formula)
-    end
-
-    def can_convert?(type, to:)
-      type == @from && (to.nil? || to == @to)
-    end
-
-    def convert(val)
-      solver = Z3::Solver.new
-      solver.assert @input == val
-      solver.model[@formula].to_i if solver.satisfiable?
-    end
-
-    def chain_with(oth)
-      chain = ConversionChain.new
-      chain.add(self).chain_with(oth)
-    end
-
-    attr_reader :from, :to, :formula, :input
-  end
-
-  class ConversionChain
-    def initialize()
-      @chain = []
-    end
-
-    def add(converter)
-      to = @chain.last&.to
-      raise ArgumentError, "can't combine non-matching #{to} / #{converter.from}" unless to.nil? || converter.from == to
-
-      @chain << converter
-
-      self
-    end
-    alias chain_with add
-
-    def convert(val)
-      solver = Z3::Optimize.new
-
-      solver.assert @chain.first.input == val
-
-      assert_conversions_on(solver)
-
-      solver.model[@chain.last.formula].to_i if solver.satisfiable?
-    end
-
-    def find_minimum(allowed_answers:)
-      solver = Z3::Optimize.new
-
-      input = @chain.first.input
-
-      output = Z3::Int('output')
-      domain_restriction = allowed_answers.reduce(Z3.False) do |candidate_matcher, candidate|
-        case candidate
-        in Range
-          candidate_matcher | (input >= candidate.begin) & (input < candidate.end)
-        in Numeric
-          candidate_matcher | (input == candidate)
-        end
-      end
-      solver.assert domain_restriction.simplify
-
-      assert_conversions_on(solver)
-
-      solver.assert output == @chain.last.formula
-      solver.minimize output
-      solver.model[output].to_i if solver.satisfiable?
-    end
-
-    private
-
-    def assert_conversions_on(solver)
-      @chain.each_cons(2) do |c1, c2|
-        solver.assert (c1.formula == c2.input).simplify
-      end
-
-      solver
-    end
-  end
-
   STEPS = %i[seed soil fertilizer water light temperature humidity location]
   def first_part
     seeds = almanac[:seed_info]
@@ -169,20 +79,6 @@ class Day5 < AdventDay
     seeds = seed_ranges.each_slice(2).map { |start, range| start...(start+range) }
 
     combined = almanac[:converters].reduce(&:chain_with)
-
-    # combined.find_minimum(allowed_answers: seeds)
-
-    # seeds.map.with_index do |seed_range, i|
-    #   [seed_range.begin, seed_range.end].map do |seed|
-    #     combined.convert(seed)
-    #   end.min
-    # end.min
-
-    # inversion = combined.inverse
-    # (1..).find do |location|
-    #   seed = inversion.convert(location) { nil }
-    #   seeds.any? { |range| range.cover? seed }
-    # end
 
     combined.breakpoints.reject do |breakpoint|
       seeds.none? { |seed_range| seed_range.cover? breakpoint }
@@ -202,7 +98,7 @@ class Day5 < AdventDay
     converters = sections.map do |section|
       lines = section.split("\n")
       from, to = lines.shift.match(/(\w+)-to-(\w+)/).captures
-      converter = NaiveConverter.new(from, to)
+      converter = Converter.new(from, to)
       lines.each do |conversion|
         dest, source, range = conversion.split.map(&:to_i)
         range = source...(source + range)
