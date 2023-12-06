@@ -1,7 +1,7 @@
 require_relative 'common'
 
 class Day6 < AdventDay
-  EXPECTED_RESULTS = { 1 => 288 }
+  EXPECTED_RESULTS = { 1 => 288, 2 => 71503 }
 
   def first_part
     races_info.map do |race_duration, race_record|
@@ -10,11 +10,22 @@ class Day6 < AdventDay
   end
 
   def second_part
+    races_info(fix_kerning: true).map do |race_duration, race_record|
+      winning_times(race_duration, race_record).size
+    end.reduce(&:*)
   end
 
   private
 
-  alias races_info input
+  def races_info(fix_kerning: false)
+    info = input
+    info.map do |line|
+      cols = line.split
+      cols.shift
+      cols = [cols.join] if fix_kerning
+      cols.map(&:to_i)
+    end.transpose
+  end
 
   # d(t) = (Tr-t)*t
   # d(t) > Dr
@@ -37,7 +48,7 @@ class Day6 < AdventDay
   end
 
   def convert_data(data)
-    super.map(&:split).map { |cols| cols.tap(&:shift).map(&:to_i) }.transpose
+    super
   end
 end
 
